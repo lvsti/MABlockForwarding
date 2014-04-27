@@ -28,12 +28,12 @@ enum {
 
 static void *BlockImpl(id block)
 {
-    return ((struct Block *)block)->invoke;
+    return ((__bridge struct Block *)block)->invoke;
 }
 
 static const char *BlockSig(id blockObj)
 {
-    struct Block *block = (void *)blockObj;
+    struct Block *block = (__bridge void *)blockObj;
     struct BlockDescriptor *descriptor = block->descriptor;
     
     assert(block->flags & BLOCK_HAS_SIGNATURE);
@@ -74,7 +74,7 @@ static const char *BlockSig(id blockObj)
         _interposer = [interposer copy];
         
         // NB: The bottom 16 bits represent the block's retain count
-        _flags = ((struct Block *) block)->flags & ~0xFFFF;
+        _flags = ((__bridge struct Block *) block)->flags & ~0xFFFF;
         
         _descriptor = malloc(sizeof(struct BlockDescriptor));
         _descriptor->size = class_getInstanceSize([self class]);
@@ -95,11 +95,7 @@ static const char *BlockSig(id blockObj)
 
 - (void)dealloc
 {
-    [_forwardingBlock release];
-    [_interposer release];
     free(_descriptor);
-    
-    [super dealloc];
 }
 
 - (NSMethodSignature *)methodSignatureForSelector: (SEL)sel
@@ -124,14 +120,14 @@ static const char *BlockSig(id blockObj)
 
 - (id)copyWithZone: (NSZone *)zone
 {
-    return [self retain];
+    return self;
 }
 
 @end
 
 id MAForwardingBlock(BlockInterposer interposer, id block)
 {
-    return [[[MAFakeBlock alloc] initWithBlock: block interposer: interposer] autorelease];
+    return [[MAFakeBlock alloc] initWithBlock: block interposer: interposer];
 }
 
 id MAMemoize(id block) {
@@ -149,7 +145,7 @@ id MAMemoize(id block) {
             {
                 [inv getArgument: &arg atIndex: i];
                 if([arg conformsToProtocol: @protocol(NSCopying)])
-                    arg = [[arg copy] autorelease];
+                    arg = [arg copy];
             }
             else if(type[0] == @encode(char *)[0])
             {
@@ -178,7 +174,7 @@ id MAMemoize(id block) {
         id result;
         @synchronized(memory)
         {
-            result = [[[memory objectForKey: args] retain] autorelease];
+            result = [memory objectForKey: args];
         }
         
         if(!result)
