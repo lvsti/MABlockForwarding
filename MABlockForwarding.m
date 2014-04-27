@@ -45,6 +45,10 @@ static const char *BlockSig(id blockObj)
     return descriptor->rest[index];
 }
 
+NSMethodSignature* SignatureForBlock(id blockObj) {
+    return [NSMethodSignature signatureWithObjCTypes:BlockSig(blockObj)];
+}
+
 @interface NSInvocation (PrivateHack)
 - (void)invokeUsingIMP: (IMP)imp;
 @end
